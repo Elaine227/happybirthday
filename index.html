@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080e0c">
+<title>Just for you</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
+:root{color-scheme:dark;--paper:#fff3d9;--muted:#bcbca6;--gold:#e7c27b;--type:'Instrument Serif',Georgia,serif}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;min-height:100svh;color:var(--paper);background:radial-gradient(ellipse at 50% 57%,#1a2c21 0%,#0e1812 39%,#070c09 75%);font:1.25rem/1.35 var(--type)}
+canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+#sky{z-index:0}#fireworks{z-index:3}
+main{position:relative;z-index:1;min-height:100svh;display:grid;place-items:center;padding:clamp(1rem,3vw,2rem);text-align:center;background:radial-gradient(ellipse,#0a120a14,transparent 66%)}
+.scene{width:min(100%,42rem);animation:appear .75s ease both}
+@keyframes appear{from{opacity:0;translate:0 10px}}
+h1,h2,p{margin:0}h1,h2{font-weight:400}h1:focus,h2:focus{outline:none}
+.display{font-style:italic;font-weight:400;line-height:.98}
+.date{color:var(--gold);font-size:clamp(.92rem,2.4vw,1.25rem);font-style:normal;letter-spacing:.18em;text-transform:uppercase}
+.name{font-size:clamp(3.3rem,9.4vw,7rem);margin:.84rem auto 0;line-height:1.06;text-shadow:0 8px 42px #000a}
+.opening{padding:.8rem 0 1.25rem;max-width:42rem}
+.star-space{width:min(79vw,24rem);height:clamp(7.25rem,23svh,12.5rem);margin:1.1rem auto .35rem;display:grid;place-items:center}
+.star{display:block;width:5.5rem;aspect-ratio:1;border-radius:50%;border:0;background:transparent;padding:0}
+.star:disabled{cursor:default}
+.invite{margin:.15rem auto 0;color:#ebd9ae;font-size:1.08rem;letter-spacing:.11em;text-transform:uppercase}
+button{cursor:pointer;font:inherit;touch-action:manipulation}
+button:focus-visible,textarea:focus-visible{outline:2px solid #ffdea2;outline-offset:4px}
+.panel{width:min(100%,38rem);padding:.3rem clamp(.3rem,4vw,1.6rem) 1rem}
+.heading{font-size:clamp(3.4rem,10vw,5.6rem);color:var(--paper)}
+.cake{position:relative;width:min(100%,30rem);aspect-ratio:1.61;margin:.1rem auto .65rem;isolation:isolate}
+#cakeArt{position:absolute;width:100%;height:100%;inset:0}
+form{max-width:25rem;margin:auto}
+label{display:block;text-align:left;color:#efdfb9;font-size:1.22rem;margin-bottom:.35rem;letter-spacing:.022em}
+textarea{resize:vertical;width:100%;min-height:4.4rem;border:1px solid #a4864a96;border-radius:.35rem;background:#070f0bdc;color:var(--paper);font:inherit;font-size:1.3rem;padding:.55rem .8rem;display:block}
+textarea::placeholder{color:#b0ae96}form .action{margin-top:.9rem}
+.status{color:#ffe5ad;font-size:1.15rem;margin:.4rem 0}.status:empty{display:none}
+.action{min-height:46px;padding:.53rem 1.25rem;border:1px solid #dfb86b;border-radius:99px;background:linear-gradient(115deg,#fae5ae,#c69a4b);color:#151b12;font-size:1.21rem;box-shadow:0 5px 22px #c2993740;transition:filter .2s}
+.action:hover{filter:brightness(1.12)}.action:disabled{opacity:.65;cursor:wait}
+.finale{width:min(100%,44rem);padding:2rem 1rem}
+.birthday{font-size:clamp(4rem,13vw,9rem);margin-top:.55rem;color:#ffeacf;text-shadow:0 0 40px #dcb15e54}
+.rule{margin:1.4rem auto;width:8rem;height:1px;background:linear-gradient(90deg,transparent,#e1bd78,transparent)}
+.blessing{white-space:pre-line;margin:0 auto 1.65rem;max-width:27rem;line-height:1.31;color:#f1ead5;font-size:clamp(1.45rem,5vw,1.95rem);min-height:4.2em;text-wrap:pretty}
+.blessing:lang(zh-Hant){font-family:"Songti TC","Noto Serif TC",serif;font-size:clamp(1.05rem,3.8vw,1.24rem);line-height:1.85}
+.final-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:.65rem}
+.firework-button{background:#243226e8;color:#fff0cd;border-color:#c9ab69;box-shadow:0 0 18px #f3c87822}
+.firework-button span{display:inline-block;margin-right:.35em;color:#fce3a2;transition:rotate .35s,scale .35s}
+.firework-button:hover span,.firework-button:focus-visible span{rotate:45deg;scale:1.24}
+.replay{background:#0a140dcc;border-color:#ae9154;color:var(--paper);box-shadow:none}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<main>
+  <section id="cover" class="scene opening">
+    <p class="display date" lang="en">November 24, 2026</p>
+    <h1 class="display name" lang="en" tabindex="-1">Just for you</h1>
+    <div class="star-space"><button id="star" class="star" type="button" aria-label="Touch the star to open your birthday card" disabled></button></div>
+    <p class="invite" id="invite">Wait for the shooting star</p>
+  </section>
+
+  <section id="wishScene" class="scene panel" hidden>
+    <h2 class="display heading" tabindex="-1" lang="en">Make a Wish</h2>
+    <div class="cake">
+      <canvas id="cakeArt" role="img" aria-label="A candlelit white fruit tart with golden pastry and shimmering fruit"></canvas>
+    </div>
+    <form id="wishForm" action="https://formspree.io/f/mvkavndk" method="post">
+      <label for="wish">Write your birthday wish</label>
+      <textarea id="wish" name="wish" maxlength="500" required placeholder="This year, I wish…"></textarea>
+      <p id="status" class="status" role="status"></p>
+      <button class="action" type="submit" lang="en">Seal Your Wish &amp; Blow Out the Candle</button>
+    </form>
+  </section>
+
+  <section id="final" class="scene finale" hidden>
+    <p class="display date" lang="en">November 24, 2026</p>
+    <h2 class="display birthday" tabindex="-1" lang="en">Happy Birthday</h2>
+    <div class="rule" aria-hidden="true"></div>
+    <p class="blessing" id="blessing"></p>
+    <div class="final-actions">
+      <button class="action firework-button" id="moreFireworks" type="button"><span aria-hidden="true">✧</span>Light the Sky</button>
+      <button class="action replay" id="replay" type="button">Watch Again</button>
+    </div>
+  </section>
+</main>
+<canvas id="fireworks" aria-hidden="true"></canvas>
+<script>
+const find = id => document.getElementById(id);
+const cover = find('cover');
+const wishScene = find('wishScene');
+const final = find('final');
+const star = find('star');
+const form = find('wishForm');
+const wish = find('wish');
+const submit = form.querySelector('button');
+const cakeArt = find('cakeArt');
+const cakeContext = cakeArt.getContext('2d');
+const sky = find('sky').getContext('2d');
+const fireworks = find('fireworks').getContext('2d');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+const messages = [
+  {lang:'zh-Hant',text:'祝你生日快樂～\n新的一歲願你平安順遂\n希望以後每年都能陪你過生日\n看你許願、吹蠟燭，再一起吃蛋糕'},
+  {lang:'zh-Hant',text:'生日快樂呀！祝你新的一歲有更多時間做喜歡的事\n也有幾個早晨，可以理直氣壯地睡到自然醒'},
+  {lang:'en',text:'May your love have me year after year.\nMay my heart hold you all my years.'}
+];
+const stars = Array.from({length:170}, () => ({
+  x:Math.random(), y:Math.random(), radius:.4+Math.random()*1.25, phase:Math.random()*Math.PI*2
+}));
+const finaleDust = Array.from({length:95},(_,i) => ({
+  a:i/95*Math.PI*2, offset:Math.random()*.24, size:.55+Math.random()*1.45,
+  phase:Math.random()*Math.PI*2
+}));
+const colors = ['#ffe5ab','#f5cb75','#a4dfc0','#d7b05c','#f9f4da'];
+let width, height, introStart, frame;
+const meteorDelay = 450;
+const meteorFlight = 1050;
+let messageIndex = 0;
+let particles = [];
+let launches = [];
+let submitting = false;
+let blownAt = null;
+let cakeSize = 0;
+let lastCakePaint = -Infinity;
+let tartOpenedAt = 0;
+
+const cakePoints = [];
+const flamePoints = [];
+const cream = ['#fffdf1','#f6e7c2','#fff4d8','#dbcaa2','#ffffff'];
+const grape = ['#a8ba69','#dfe49d','#c2d277','#728953'];
+const blueberry = ['#6b8ea1','#8ea9b0','#4e6b83','#b6c4c6'];
+const apricot = ['#ffc46d','#ffe1a2','#e79540','#ffd489'];
+const leaf = ['#5ab49b','#abd8b3','#397b60'];
+const tau = Math.PI*2;
+
+function addPoint(list,x,y,z,palette,size = 1) {
+  const color = palette[Math.floor(Math.random()*palette.length)];
+  list.push({x,y,z,color,size,phase:Math.random()*tau,light:.38+Math.random()*.62});
+}
+
+function disk(y,radius,count,palette) {
+  for (let i=0;i<count;i++) {
+    const a = Math.random()*tau;
+    const r = radius*Math.sqrt(Math.random());
+    addPoint(cakePoints,r*Math.cos(a),y,r*Math.sin(a),palette,.65+Math.random()*.65);
+  }
+}
+
+function ring(y,radius,count,palette,thickness) {
+  for (let i=0;i<count;i++) {
+    const a = Math.random()*tau;
+    const r = radius+(Math.random()-.5)*thickness;
+    addPoint(cakePoints,r*Math.cos(a),y+(Math.random()-.5)*thickness,r*Math.sin(a),palette);
+  }
+}
+
+// Each berry is a sampled three-dimensional surface, with its own silhouette.
+function fruit(x,y,z,rx,ry,rz,count,palette,pointed = false) {
+  for (let i=0;i<count;i++) {
+    const a = Math.random()*tau;
+    const v = Math.random()*2-1;
+    const r = Math.sqrt(1-v*v)*(pointed ? .82+.37*v : 1);
+    addPoint(cakePoints,x+rx*r*Math.cos(a),y+ry*v,z+rz*r*Math.sin(a),palette,.8+Math.random()*.7);
+  }
+}
+
+const crust = ['#c19345','#f5cc7c','#e8ad53','#ffdfa0','#936934'];
+disk(-33,112,400,['#ceae67','#e2ce9e','#779987']);
+ring(-34,112,770,['#ae8d4e','#e8c77f','#ebd3a1'],1.2);
+ring(-32,105,380,['#b4c39e','#f5daa1'],.8);
+disk(12,86,2000,cream);
+
+// A fluted pastry shell with a rolled, brighter rim.
+for (let i=0;i<6700;i++) {
+  const a = Math.random()*tau;
+  const y = -29+47*Math.random();
+  const upper = Math.max(0,(y-10)/8);
+  const radius = 78+(y+29)*.25+3.4*Math.cos(a*42)-5*upper*upper;
+  addPoint(cakePoints,radius*Math.cos(a),y,radius*Math.sin(a),crust,.55+Math.random()*.65);
+}
+ring(17,87,870,['#f4d38c','#fff0c5','#e7b862'],3.2);
+
+for (let i=0;i<22;i++) {
+  const a = i/22*tau;
+  const r = 63+2.5*Math.sin(a*3);
+  const x = r*Math.cos(a);
+  const z = r*Math.sin(a);
+  fruit(x,17,z,8.4,6.9,8.4,85,cream,true);
+  if (i%4===0) fruit(x*.88,23,z*.88,7.7,7.5,7.9,170,grape);
+  else if (i%4===1) fruit(x*.86,24,z*.86,9,3.5,6.6,135,apricot);
+  else fruit(x*.9,24,z*.9,5.1,5.1,5.3,100,blueberry);
+}
+for (let i=0;i<9;i++) {
+  const a = i/9*tau+.17;
+  const r = 45+7*Math.cos(a*3);
+  const x = r*Math.cos(a);
+  const z = r*Math.sin(a);
+  fruit(x,17,z,8,2.6,4,65,leaf);
+  fruit(x*.82,21,z*.82,3.8,3.8,3.8,55,blueberry);
+}
+for (let i=0;i<340;i++) {
+  const a = Math.random()*tau;
+  const y = 13+58*Math.random();
+  const palette = Math.sin(y*.55+a*1.15)>0 ? ['#fff7e7','#fff4d5'] : ['#beb27b','#e5c982'];
+  addPoint(cakePoints,3.3*Math.cos(a),y,3.3*Math.sin(a),palette);
+}
+for (let i=0;i<200;i++) {
+  const y = Math.random();
+  const r = Math.sqrt(Math.random())*Math.sin(Math.PI*y)**1.2*6.5;
+  const a = Math.random()*tau;
+  addPoint(flamePoints,r*Math.cos(a)+3*y*y,74+23*y,r*Math.sin(a),
+    y < .55 ? ['#fff8d8','#ffe2a0','#ffc367'] : ['#fff1ac','#ffd17b','#ff9858'],.75+Math.random());
+}
+
+function drawCake(time) {
+  const size = cakeArt.clientWidth;
+  if (!size) return;
+  const height = cakeArt.clientHeight;
+  const ratio = Math.min(devicePixelRatio || 1,2);
+  if (cakeSize !== size) {
+    cakeSize = size;
+    cakeArt.width = Math.round(size*ratio);
+    cakeArt.height = Math.round(height*ratio);
+    cakeContext.setTransform(ratio,0,0,ratio,0,0);
+  }
+
+  const ctx = cakeContext;
+  const motion = reduced.matches ? 0 : time/1000;
+  const angle = motion*.27+.55;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const scale = Math.min(size/270,height/207);
+  const centerX = size/2;
+  const centerY = height*.55;
+  ctx.clearRect(0,0,size,height);
+  const glow = ctx.createRadialGradient(centerX,centerY,0,centerX,centerY,size*.48);
+  glow.addColorStop(0,'#a8cc9432');
+  glow.addColorStop(1,'#a8cc9400');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0,0,size,height);
+
+  function project(point) {
+    const depth = point.z*cos+point.x*sin;
+    const perspective = 1+depth/670;
+    return {
+      point,depth,
+      x:centerX+(point.x*cos-point.z*sin)*scale*perspective,
+      y:centerY+(-point.y*.92+depth*.37)*scale*perspective,
+      radius:point.size*scale*perspective
+    };
+  }
+
+  const base = project({x:0,y:-39,z:0,size:1});
+  paintOrbits(ctx,base.x,base.y,scale*125,motion,2,false);
+
+  const bloom = reduced.matches ? 1 : Math.min(1,Math.max(0,(time-tartOpenedAt)/780));
+  const spread = (1-bloom)**2;
+  const projected = cakePoints.map(point => project(spread > 0 ? {
+    ...point,
+    x:point.x+Math.cos(point.phase)*spread*42,
+    y:point.y+Math.sin(point.phase*2)*spread*50,
+    z:point.z+Math.sin(point.phase)*spread*42
+  } : point)).sort((a,b) => a.depth-b.depth);
+  for (const {x,y,radius,depth,point} of projected) {
+    const sparkle = .81+.19*Math.sin(point.phase+motion*2.3);
+    ctx.globalAlpha = (.28+.72*bloom)*point.light*sparkle*(.74+(depth+106)/790);
+    ctx.fillStyle = point.color;
+    const width = radius*1.4;
+    ctx.fillRect(x-width/2,y-width/2,width,width);
+  }
+
+  paintOrbits(ctx,base.x,base.y,scale*125,motion,2,true);
+
+  const elapsed = blownAt === null ? 0 : reduced.matches ? 1250 : Math.max(0,time-blownAt);
+  const extinguish = Math.min(1,elapsed/410);
+  const lean = Math.sin(extinguish*Math.PI*.85);
+  const wick = project({x:0,y:73,z:0,size:1});
+  if (extinguish < 1) {
+    const haloX = wick.x+lean*16*scale;
+    const haloY = wick.y-9*scale;
+    const halo = ctx.createRadialGradient(haloX,haloY,0,haloX,haloY,25*scale);
+    halo.addColorStop(0,'#ffc36a80');
+    halo.addColorStop(1,'#ffc36a00');
+    ctx.globalAlpha = 1-extinguish;
+    ctx.fillStyle = halo;
+    ctx.fillRect(haloX-26*scale,haloY-26*scale,52*scale,52*scale);
+    ctx.globalCompositeOperation = 'lighter';
+    for (const point of flamePoints) {
+      const rise = point.y-73;
+      const flicker = Math.sin(motion*6+point.phase)*1.35;
+      const x = wick.x+(point.x+flicker+rise*lean*1.45)*scale;
+      const y = wick.y-(rise*(1-.73*extinguish)+Math.sin(point.phase+motion*4)*1.7)*scale;
+      ctx.globalAlpha = point.light*(1-extinguish)**1.3;
+      ctx.fillStyle = point.color;
+      const size = point.size*scale*1.45;
+      ctx.fillRect(x,y,size,size);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  if (!reduced.matches && elapsed > 145 && elapsed < 1250) {
+    ctx.fillStyle = '#deded0';
+    for (let i=0;i<115;i++) {
+      const age = (elapsed-145-i*4)/765;
+      if (age <= 0 || age >= 1) continue;
+      const wave = Math.sin(age*9-i*.16);
+      const x = wick.x+(age*34+wave*age*11)*scale;
+      const y = wick.y-(age*48+Math.cos(i*2)*age*6)*scale;
+      const size = (.65+age*1.7)*scale;
+      ctx.globalAlpha = Math.sin(age*Math.PI)*(1-age)*.29;
+      ctx.fillRect(x,y,size,size);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function resize() {
+  width = innerWidth;
+  height = innerHeight;
+  const scale = Math.min(devicePixelRatio || 1, 2);
+  for (const context of [sky, fireworks]) {
+    context.canvas.width = width * scale;
+    context.canvas.height = height * scale;
+    context.setTransform(scale,0,0,scale,0,0);
+  }
+}
+function show(scene) {
+  for (const panel of [cover, wishScene, final]) panel.hidden = panel !== scene;
+  scene.querySelector('h1,h2').focus({preventScroll:true});
+  window.scrollTo(0,0);
+}
+function startIntro() {
+  star.classList.remove('ready');
+  star.disabled = true;
+  find('invite').textContent = 'Wait for the shooting star';
+  introStart = performance.now();
+}
+function lightStar() {
+  star.disabled = false;
+  star.classList.add('ready');
+  find('invite').textContent = 'Touch the star';
+}
+const orbitDust = Array.from({length:180}, (_, i) => ({
+  a:Math.random()*tau, radius:1+Math.random()*.4,
+  y:(Math.random()-.5)*.7, size:.5+Math.random()*1.2, phase:i%2
+}));
+
+function paintOrbits(ctx,x,y,radius,time,rings,front) {
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.rotate(-.12);
+  ctx.lineWidth = .8;
+  for (let i=0;i<rings;i++) {
+    const r = radius*(1+i*.14);
+    const start = time*(i%2 ? -.27 : .22)+i;
+    ctx.globalAlpha = front ? .64 : .24;
+    ctx.strokeStyle = i%2 ? '#95c7a0' : '#eac77f';
+    ctx.beginPath();
+    ctx.ellipse(0,0,r,r*.23,0,start,start+Math.PI*.92);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#f2cc83';
+  for (const mote of orbitDust) {
+    const a = mote.a+time*(mote.phase ? .3 : -.2);
+    if ((Math.sin(a) >= 0) !== front) continue;
+    const r = radius*mote.radius;
+    ctx.globalAlpha = .17+.59*(.5+.5*Math.sin(mote.a*7+time*2));
+    ctx.fillRect(r*Math.cos(a),r*.23*Math.sin(a)+mote.y*radius*.42,mote.size,mote.size);
+  }
+  ctx.restore();
+}
+
+function paintCoverOrbits(time) {
+  if (cover.hidden) return;
+  const bounds = star.getBoundingClientRect();
+  const x = bounds.left+bounds.width/2;
+  const y = bounds.top+bounds.height/2;
+  const radius = Math.min(width*.3,164);
+  const seconds = time/1000;
+  paintOrbits(sky,x,y,radius,seconds,2,false);
+  paintOrbits(sky,x,y,radius,seconds,2,true);
+  // The destination is already visible, then brightens as the trail reaches it.
+  const arrival = reduced.matches ? 1 : Math.max(0,Math.min(1,(time-introStart-meteorDelay-meteorFlight+135)/380));
+  const glow = arrival*arrival*(3-2*arrival);
+  const shine = (.29+.71*glow)*(.92+.08*Math.sin(seconds*2.7));
+  const halo = sky.createRadialGradient(x,y,0,x,y,28);
+  halo.addColorStop(0,'#fffbe1');
+  halo.addColorStop(.075,'#fbe1a4');
+  halo.addColorStop(.23,'#e0ad5d59');
+  halo.addColorStop(1,'#e0ad5d00');
+  sky.globalAlpha = shine;
+  sky.fillStyle = halo;
+  sky.fillRect(x-28,y-28,56,56);
+  sky.lineWidth = 1;
+  for (const [dx,dy] of [[23,0],[0,34],[8,8],[8,-8]]) {
+    const ray = sky.createLinearGradient(x-dx,y-dy,x+dx,y+dy);
+    ray.addColorStop(0,'#dfac5900');
+    ray.addColorStop(.5,'#fff4ce');
+    ray.addColorStop(1,'#dfac5900');
+    sky.strokeStyle = ray;
+    sky.beginPath();
+    sky.moveTo(x-dx,y-dy);
+    sky.lineTo(x+dx,y+dy);
+    sky.stroke();
+  }
+  sky.globalAlpha = 1;
+}
+
+function paintFinale(time) {
+  if (final.hidden) return;
+  const bounds = final.getBoundingClientRect();
+  const cx = bounds.left+bounds.width/2;
+  const cy = bounds.top+bounds.height*.49;
+  const rx = Math.min(width*.46,bounds.width*.66);
+  const ry = Math.min(height*.46,bounds.height*.64);
+  const seconds = time/1000;
+
+  sky.save();
+  sky.translate(cx,cy);
+  sky.rotate(-.16);
+  sky.strokeStyle = '#dab871';
+  sky.lineWidth = .65;
+  for (let i=0;i<3;i++) {
+    const start = seconds*.12+i*Math.PI*2/3;
+    sky.globalAlpha = .23+i*.045;
+    sky.beginPath();
+    sky.ellipse(0,0,rx*(1+i*.024),ry*(1+i*.037),0,start,start+.37);
+    sky.stroke();
+  }
+  sky.fillStyle = '#f9da93';
+  for (const mote of finaleDust) {
+    const a = mote.a+seconds*.13;
+    const flicker = .5+.5*Math.sin(mote.phase+seconds*1.65);
+    const radius = .9+mote.offset;
+    const x = Math.cos(a)*rx*radius;
+    const y = Math.sin(a)*ry*radius;
+    const size = mote.size*(.6+.4*flicker);
+    sky.globalAlpha = .18+.61*flicker;
+    sky.fillRect(x,y,size,size);
+  }
+  sky.restore();
+}
+
+function paintStars(time) {
+  sky.clearRect(0,0,width,height);
+  sky.fillStyle = '#f4e8c4';
+  for (const point of stars) {
+    sky.globalAlpha = .2 + .6 * (.5 + .5 * Math.sin(point.phase + time / 900));
+    sky.beginPath();
+    sky.arc(point.x*width,point.y*height,point.radius,0,Math.PI*2);
+    sky.fill();
+  }
+  sky.globalAlpha = 1;
+}
+function paintMeteor(time) {
+  if (cover.hidden) return;
+  if (reduced.matches) {
+    if (star.disabled) lightStar();
+    return;
+  }
+  const elapsed = time-introStart-meteorDelay;
+  if (elapsed >= meteorFlight && star.disabled) lightStar();
+  if (elapsed < 0 || elapsed >= meteorFlight+360) return;
+
+  const progress = Math.min(1,elapsed/meteorFlight);
+  const fade = Math.max(0,(elapsed-meteorFlight)/360);
+  const bounds = star.getBoundingClientRect();
+  const targetX = bounds.left+bounds.width/2;
+  const targetY = bounds.top+bounds.height/2;
+  const originX = width*.96;
+  const originY = -10;
+  const dx = originX-targetX;
+  const dy = originY-targetY;
+  const distance = Math.hypot(dx,dy);
+  const x = originX-dx*progress;
+  const y = originY-dy*progress;
+  const tailLength = Math.min(distance*progress,130)*(1-fade);
+  if (tailLength < .1) return;
+  const trail = sky.createLinearGradient(x,y,x+dx/distance*tailLength,y+dy/distance*tailLength);
+  trail.addColorStop(0,'#fff2be');
+  trail.addColorStop(.27,'#ddbf83bb');
+  trail.addColorStop(1,'#f3ba6900');
+  sky.globalAlpha = 1-fade;
+  sky.strokeStyle = trail;
+  sky.lineWidth = 1.6;
+  sky.beginPath();
+  sky.moveTo(x,y);
+  sky.lineTo(x+dx/distance*tailLength,y+dy/distance*tailLength);
+  sky.stroke();
+  sky.globalAlpha = 1;
+}
+function sparkBurst(x,y,color,shape) {
+  const count = shape ? 105 : 70;
+  for (let i=0; i<count; i++) {
+    const angle = i/count*Math.PI*2;
+    const speed = shape ? 3.5 + Math.random()*.85 : .8 + Math.random()*4.9;
+    particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:1,fade:.008+Math.random()*.011,color});
+  }
+}
+function celebrate() {
+  if (reduced.matches) return;
+  launches = Array.from({length:13}, (_, i) => ({
+    start:performance.now()+i*175,
+    x:width*(.08+Math.random()*.84),
+    y:height*(.1+Math.random()*.48),
+    color:colors[i%colors.length],
+    shape:i%3===0
+  }));
+}
+function paintFireworks(time, step) {
+  fireworks.clearRect(0,0,width,height);
+  launches = launches.filter(launch => {
+    const progress = (time-launch.start)/500;
+    if (progress < 0) return true;
+    if (progress >= 1) {
+      sparkBurst(launch.x,launch.y,launch.color,launch.shape);
+      return false;
+    }
+    const y = height+(launch.y-height)*progress;
+    fireworks.globalAlpha = .9;
+    fireworks.strokeStyle = launch.color;
+    fireworks.lineWidth = 2;
+    fireworks.beginPath();
+    fireworks.moveTo(launch.x,y);
+    fireworks.lineTo(launch.x,y+18);
+    fireworks.stroke();
+    return true;
+  });
+  particles = particles.filter(p => {
+    p.life -= p.fade*step;
+    if (p.life <= 0) return false;
+    p.x += p.vx*step;
+    p.y += p.vy*step;
+    p.vx *= .99 ** step;
+    p.vy += .045*step;
+    fireworks.globalAlpha = p.life;
+    fireworks.strokeStyle = p.color;
+    fireworks.lineWidth = 1.45;
+    fireworks.beginPath();
+    fireworks.moveTo(p.x,p.y);
+    fireworks.lineTo(p.x-p.vx*3,p.y-p.vy*3);
+    fireworks.stroke();
+    return true;
+  });
+}
+let lastTime = 0;
+function animate(time) {
+  frame = 0;
+  const step = Math.min(2,(time-(lastTime || time))/16.67);
+  lastTime = time;
+  paintStars(reduced.matches ? 0 : time);
+  paintMeteor(time);
+  paintCoverOrbits(reduced.matches ? 0 : time);
+  paintFinale(reduced.matches ? 0 : time);
+  if (!wishScene.hidden && time-lastCakePaint >= 31) {
+    drawCake(time);
+    lastCakePaint = time;
+  }
+  if (!reduced.matches) {
+    paintFireworks(time,step);
+    frame = requestAnimationFrame(animate);
+  }
+}
+star.addEventListener('click', () => {
+  tartOpenedAt = performance.now();
+  show(wishScene);
+  drawCake(performance.now());
+});
+form.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (submitting) return;
+  if (!wish.value.trim()) {
+    wish.setCustomValidity('Write a wish before blowing out the candle.');
+    wish.reportValidity();
+    return;
+  }
+
+  submitting = true;
+  submit.disabled = true;
+  find('status').textContent = 'Sending your wish…';
+  try {
+    const response = await fetch(form.action, {
+      method:'POST',
+      body:new FormData(form),
+      headers:{Accept:'application/json'},
+      signal:AbortSignal.timeout(12000)
+    });
+    if (!response.ok) throw new Error('Submission failed');
+  } catch {
+    find('status').textContent = 'Your wish couldn’t be sent. Please try again.';
+    submitting = false;
+    submit.disabled = false;
+    return;
+  }
+
+  find('status').textContent = '';
+  blownAt = performance.now();
+  if (reduced.matches) drawCake(blownAt);
+  setTimeout(() => {
+    const blessing = find('blessing');
+    blessing.lang = messages[messageIndex].lang;
+    blessing.textContent = messages[messageIndex].text;
+    show(final);
+    if (reduced.matches) {
+      paintStars(0);
+      paintFinale(0);
+    }
+    celebrate();
+  }, reduced.matches ? 0 : 1250);
+});
+wish.addEventListener('input', () => wish.setCustomValidity(''));
+find('moreFireworks').hidden = reduced.matches;
+find('moreFireworks').addEventListener('click', celebrate);
+find('replay').addEventListener('click', () => {
+  messageIndex = (messageIndex+1)%messages.length;
+  submitting = false;
+  submit.disabled = false;
+  form.reset();
+  wish.setCustomValidity('');
+  blownAt = null;
+  particles = [];
+  launches = [];
+  fireworks.clearRect(0,0,width,height);
+  show(cover);
+  startIntro();
+  if (reduced.matches) {
+    lightStar();
+    paintStars(0);
+    paintCoverOrbits(0);
+  }
+});
+addEventListener('resize', () => {
+  resize();
+  if (reduced.matches) {
+    paintStars(0);
+    paintCoverOrbits(0);
+    paintFinale(0);
+    if (!wishScene.hidden) drawCake(performance.now());
+  }
+});
+reduced.addEventListener('change', () => {
+  find('moreFireworks').hidden = reduced.matches;
+  particles = [];
+  launches = [];
+  fireworks.clearRect(0,0,width,height);
+  if (!frame) frame = requestAnimationFrame(animate);
+});
+resize();
+startIntro();
+frame = requestAnimationFrame(animate);
+</script>
+</body>
+</html>
